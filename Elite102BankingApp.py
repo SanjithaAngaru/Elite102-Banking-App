@@ -11,28 +11,36 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 
-def choice_one(): #choice 1  COMPLETED (creating account)
-    print("You have chosen to create an account.")
+def choice_one(): #choice 1  (completed) CREATING AN ACCOUNT
+    print("You have chosen to create an account.\n")
     first_name = input("Enter your first name: ")
     last_name = input("Enter your last name: ")
     balance = float(input("Enter your initial deposit: "))
     cursor.execute("INSERT INTO accounts (first_name, last_name, balance, status) VALUES (%s, %s, %s, %s)",(first_name, last_name, balance, "Active"))
      #NOTE: According to google, the %s is are used to tell SQL not to enter in the variable name, but the content of the variables.
-    print(f"Account created successfully {first_name}! Press 3 to view your account details.")
+    print(f"Account created successfully {first_name}! Click 'View Existing Accounts' to view your account details.")
     conn.commit()
 
-def choice_two(): #choice two COMPLETED (deposit/withdraw)
-    print("You have chosen to deposit/withdraw.")
+def choice_two(): #choice two (completed) DEPOSIT/WITHDRAW
+    print("You have chosen to deposit/withdraw.\n")
     choice = input("Enter 1 to deposit or 2 to withdraw: ")
-    if choice == '1': # Deposit to account
-        print("You have chosen to deposit.")
-        account_id = int(input("Enter your account ID:"))
-        with conn.cursor() as cursor: 
+    with conn.cursor() as cursor: 
+        if choice == '1': # Deposit to account
+            print("You have chosen to deposit.")
+            account_id = int(input("Enter your account ID:"))
+            first_name = input("Enter your first name: ")
+            last_name = input("Enter your last name: ")
+            cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = (%s)", (account_id,))
+            result = cursor.fetchone()
+            if result[0].lower() != first_name.lower() or result[1].lower() != last_name.lower(): #lines 30 -36 to check if the first and last name match the account ID
+                print("Account ID not found. Please try again.")
+                return
+
             cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = %s", (account_id,))
             result = cursor.fetchone()
             if not result:
-                print("Account ID not found. Please try again.")
-                return
+                    print("Account ID not found. Please try again.")
+                    return
             amount = float(input("Enter the amount to deposit: "))
             cursor.execute("UPDATE accounts SET balance = balance + %s WHERE account_id = %s", (amount, account_id))
             #updates transactions table with deposit
@@ -41,30 +49,37 @@ def choice_two(): #choice two COMPLETED (deposit/withdraw)
             #NOTE: I asked Google to help me with the UPDATE query in SQL.
             conn.commit()
             print(f"Deposited ${amount} to account {account_name}.")
-    elif choice == '2': # Withdraw from account
-        print("You have chosen to withdraw.")
-        account_id = int(input("Enter your account ID:"))
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = %s", (account_id,))
+        elif choice == '2': # Withdraw from account
+            print("You have chosen to withdraw.")
+            account_id = int(input("Enter your account ID:"))
+            first_name = input("Enter your first name: ")
+            last_name = input("Enter your last name: ")
+            cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = (%s)", (account_id,))
             result = cursor.fetchone()
-            if not result:
+            if result[0].lower() != first_name.lower() or result[1].lower() != last_name.lower(): #(copied here)lines 30 -36 to check if the first and last name match the account ID
                 print("Account ID not found. Please try again.")
-                return
-            amount = float(input("Enter the amount to withdraw: "))
-            cursor.execute("UPDATE accounts SET balance = balance - %s WHERE account_id = %s", (amount, account_id))
-            #updates transactions table with withdrawal
-            account_name = f"{result[0]} {result[1]}"
-            cursor.execute("INSERT INTO transactions (account_name, transaction_type, amount) VALUES (%s, %s, %s)",(account_name, 'Withdrawal', amount))
-            conn.commit()
-            
-            cursor.execute("SELECT balance FROM accounts WHERE account_id = %s", (account_id,)) #withdrawal check 
-            current_balance = cursor.fetchone()[0]
-            if amount > float(current_balance):
-                print("Insufficient funds.")
-                return
-            print(f"Withdrew ${amount} from account {account_name}.")
-    else:
-        print("Invalid option. please try again.")
+                return                       
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = %s", (account_id,))
+                result = cursor.fetchone()
+                if not result:
+                    print("Account ID not found. Please try again.")
+                    return
+                amount = float(input("Enter the amount to withdraw: "))
+                cursor.execute("UPDATE accounts SET balance = balance - %s WHERE account_id = %s", (amount, account_id))
+                #updates transactions table with withdrawal
+                account_name = f"{result[0]} {result[1]}"
+                cursor.execute("INSERT INTO transactions (account_name, transaction_type, amount) VALUES (%s, %s, %s)",(account_name, 'Withdrawal', amount))
+                conn.commit()
+                
+                cursor.execute("SELECT balance FROM accounts WHERE account_id = %s", (account_id,)) #withdrawal check 
+                current_balance = cursor.fetchone()[0]
+                if amount > float(current_balance):
+                    print("Insufficient funds.")
+                    return
+                print(f"Withdrew ${amount} from account {account_name}.")
+        else:
+            print("Invalid option. please try again.")
 
 #MINI FUNCTION FOR ---UNITTEST CHECKING--- Withdrawal Validation
 def validate_withdrawal(amount, current_balance):
@@ -74,8 +89,8 @@ def validate_withdrawal(amount, current_balance):
         return "Insufficient Funds"
     return "Valid Withdrawal"
 
-def choice_three(): #choice three COMPLETED (view active accounts) - CLEAN UP THE UI FOR THIS ONE
-    print("You have chosen to view active accounts.\nHere are the active accounts:")
+def choice_three(): #choice three (completed) VIEW ACTIVE ACCOUNTS
+    print("\nYou have chosen to view active accounts.\nHere are the active accounts:")
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM accounts WHERE status = 'Active'")
         rows = cursor.fetchall()
@@ -86,21 +101,28 @@ def choice_three(): #choice three COMPLETED (view active accounts) - CLEAN UP TH
 Fetchone is used to get one row from the database and converts it into a tuple. 
 The zero brings the first element of the tuple which is the new balance.'''
 
-def choice_four(): #choice four COMPLETED (check balance)
-    print("You have chosen to check balance.")
+def choice_four(): #choice four (completed) CHECK BALANCE
+    print("\nYou have chosen to check balance.")
     account_id = int(input("Enter your account ID:"))
+    first_name = input("Enter your first name: ")
+    last_name = input("Enter your last name: ")
     with conn.cursor() as cursor:
-        cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = (%s)", (account_id,))
         result = cursor.fetchone()
         if not result:
             print(f"Account ID {account_id} not found. Please try again.")
-        else:
-            cursor.execute("SELECT balance FROM accounts WHERE account_id = %s", (account_id,))
-            balance = cursor.fetchone()[0]
-            print(f"Your current balance is: {balance}")
+            return
+        elif result[0].lower() != first_name.lower() or result[1].lower() != last_name.lower(): #copied here lines 30 -36 to check if the first and last name match the account ID
+            print("Account ID not found. Please try again.")
+            return
+
+        cursor.execute("SELECT balance FROM accounts WHERE account_id = %s", (account_id,))
+        balance = cursor.fetchone()[0]
+        print(f"Your current balance is: ${balance}")
+        return
     
 
-# MAIN MENU loop - CLS Version. TO-DO: Change into Tkinter version 
+# MAIN MENU loop - CLS Version. TO-DO: Change into Tkinter version (COMPLETED)
 if __name__ == "__main__": #it only runs this file directly, not the other imported files
     while True:     #Terminal UI created -- (may add updates)
         print("\n----Welcome to Elite 102 Banking App. Choose one of the following:----")
