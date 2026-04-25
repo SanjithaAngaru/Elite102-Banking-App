@@ -1,0 +1,63 @@
+import tkinter as tk
+from tkinter import font
+
+import Elite102BankingApp # Import your other file 
+#Asked AI on how to create buttons and labels in TKinter and how to link other functions to the TKinter buttons. 
+#I also used the TKinter documentation to help me with the code.
+root = tk.Tk()
+root.title("Elite 102 Banking App")
+root.geometry("500x600")
+root.configure(bg="#2c3e50")  # Dark blue background
+
+title_font = font.Font(family='Arial', size=24, weight='bold')
+button_font = font.Font(family='Arial', size=12, weight='bold')
+welcome_label = tk.Label(
+    root, 
+    text="Welcome to the\nElite 102 Banking App!\n\nChoose one of the following options:", 
+    font=title_font,
+    fg="#ecf0f1",      # Off-white text color
+    bg="#2c3e50",      # Black/blueish window background
+    justify="center"
+)
+welcome_label.pack(pady=30)
+
+def create_account():
+    Elite102BankingApp.choice_one()
+    font=button_font
+
+btn1 = tk.Button(root, text='Create an Account', command=create_account) #choice 1 button
+btn1.pack(pady=20)
+
+def deposit_withdraw():
+    Elite102BankingApp.choice_two()
+    font=button_font
+
+btn2 = tk.Button(root, text='Deposit or Withdraw', command=deposit_withdraw) #choice 2 button
+btn2.pack(pady=20)
+
+def view_accounts():
+    Elite102BankingApp.choice_three()
+    font=button_font
+
+btn3 = tk.Button(root, text='View Existing Accounts', command=view_accounts) #choice 3 button
+btn3.pack(pady=20)
+
+def check_balance():
+    Elite102BankingApp.choice_four() #choice 4 button
+    font=button_font
+
+btn4 = tk.Button(root, text='Check Balance', command=check_balance)
+btn4.pack(pady=20)
+
+def wire_transfer():
+    Elite102BankingApp.choice_five() #choice 5 button
+    font=button_font
+
+btn5 = tk.Button(root, text='Wire Transfer', command=wire_transfer)
+btn5.pack(pady=20)
+
+root.mainloop()
+
+
+# use this to run your code 
+# /usr/local/bin/python3 /Users/sanju/Elite102BankingApp/TKinter
