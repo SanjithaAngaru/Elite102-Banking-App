@@ -8,24 +8,17 @@ Run the Python file. A Tkinter window will appear with buttons for each action, 
 #Choose an option using the Tkinter buttons
 
 - Create Account
-
 - Deposit / Withdraw
-
 - View Active Accounts
-
 - Check Balance
-
-- Exit
+- Wire Transfer
 
 #Follow the prompts in the terminal  
 After clicking a button, the program will ask for information in the terminal, such as:
 
 - First name
-
 - Last name
-
 - Account ID
-
 - Deposit/withdraw amount
 
 All confirmations, balances, and account details are printed directly in the terminal.
