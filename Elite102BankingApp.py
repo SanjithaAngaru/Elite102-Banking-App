@@ -57,7 +57,7 @@ def choice_two(): #choice two (completed) DEPOSIT/WITHDRAW
             cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = (%s)", (account_id,))
             result = cursor.fetchone()
             if result[0].lower() != first_name.lower() or result[1].lower() != last_name.lower(): #(copied here)lines 30 -36 to check if the first and last name match the account ID
-                print("Account ID not found. Please try again.")
+                print("We couldn't find the account matching your entry. Please try again.")
                 return                       
             with conn.cursor() as cursor:
                 cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = %s", (account_id,))
@@ -113,14 +113,63 @@ def choice_four(): #choice four (completed) CHECK BALANCE
             print(f"Account ID {account_id} not found. Please try again.")
             return
         elif result[0].lower() != first_name.lower() or result[1].lower() != last_name.lower(): #copied here lines 30 -36 to check if the first and last name match the account ID
-            print("Account ID not found. Please try again.")
+            print("We couldn't find the account matching your entry. Please try again.")
             return
 
         cursor.execute("SELECT balance FROM accounts WHERE account_id = %s", (account_id,))
         balance = cursor.fetchone()[0]
         print(f"Your current balance is: ${balance}")
         return
+def choice_five():  # wire transfer
+    print("\nYou have chosen to wire transfer.")
+    # Sender info
+    sender_id = int(input("Enter YOUR account ID: "))
+    sender_first = input("Enter YOUR first name: ")
+    sender_last = input("Enter YOUR last name: ")
+    # Receiver info
+    receiver_id = int(input("Enter RECEIVER'S account ID: "))
+    receiver_first = input("Enter RECEIVER'S first name: ")
+    receiver_last = input("Enter RECEIVER'S last name: ")
+
+    amount = float(input("Enter the amount to transfer: "))
+    with conn.cursor() as cursor:
+        # 1. Verify sender
+        cursor.execute("SELECT first_name, last_name, balance FROM accounts WHERE account_id = %s", (sender_id,)) 
+        sender = cursor.fetchone()
+        if not sender:
+            print("Sender account not found.")
+            return
+        if sender[0].lower() != sender_first.lower() or sender[1].lower() != sender_last.lower(): #checks if the last name or the first name matches or not with what the user entered
+            print("Sender name does not match account ID.")
+            return
+        sender_balance = float(sender[2]) #in the tuple from sender, it only takes the balance from index 2 of the tuple
+        # 2. Verify receiver
+        cursor.execute("SELECT first_name, last_name FROM accounts WHERE account_id = %s", (receiver_id,))
+        receiver = cursor.fetchone() #fetchone is used to get one row from the database and converts it into a tuple.
+        if not receiver:
+            print("Receiver account not found.") 
+            return
+        if receiver[0].lower() != receiver_first.lower() or receiver[1].lower() != receiver_last.lower(): #same applies here
+            print("Receiver name does not match account ID.")
+            return
+        # 3. Check sender has enough money
+        if float(amount) > float(sender_balance): #checks if amount is greater than the sender's balance
+            print("Insufficient funds for transfer.")
+            return
+        # 4. Withdraw from sender
+        cursor.execute("UPDATE accounts SET balance = balance - %s WHERE account_id = %s", (amount, sender_id))
+        # 5. Deposit into receiver
+        cursor.execute("UPDATE accounts SET balance = balance + %s WHERE account_id = %s", (amount, receiver_id))
+        # 6. Log transactions
+        sender_name = f"{sender[0]} {sender[1]}" 
+        receiver_name = f"{receiver[0]} {receiver[1]}"
+        cursor.execute("INSERT INTO transactions (account_name, transaction_type, amount) VALUES (%s, %s, %s)", (sender_name, "Wire Transfer Sent", amount))
+        cursor.execute("INSERT INTO transactions (account_name, transaction_type, amount) VALUES (%s, %s, %s)", (receiver_name, "Wire Transfer Received", amount))
+        conn.commit()
+        print(f"Successfully transferred ${amount} from {sender_name} to {receiver_name}. To verify the transfer, click 'View Existing Accounts'.")
+
     
+
 
 # MAIN MENU loop - CLS Version. TO-DO: Change into Tkinter version (COMPLETED)
 if __name__ == "__main__": #it only runs this file directly, not the other imported files
@@ -137,6 +186,8 @@ if __name__ == "__main__": #it only runs this file directly, not the other impor
         elif choice == '4':
             choice_four()
         elif choice == '5':
+           choice_five() 
+        elif choice == '6':
             print("Thank you for using Elite 102 Banking App.")
             break
 
